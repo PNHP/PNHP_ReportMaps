@@ -14,22 +14,22 @@ extantyear <- currentyear - 25
 #gets the year, the as.numeric seems to turn all 'no date' and 'pre-' values to NA
 eo@data$lastyear <- as.numeric(substr(eo@data$LASTOBS,1,4))
 # assign legends and colors for the maps
-eo@data$extant[eo@data$lastyear<extantyear] <- "Historic"
-eo@data$extant[eo@data$lastyear>=extantyear] <- "Extant"
+eo@data$extant[eo@data$lastyear>extantyear] <- "Historic"
+eo@data$extant[eo@data$lastyear<=extantyear] <- "Extant"
 eo@data$extant[is.na(eo@data$lastyear)] <- "Historic"
 # the following lines just add a color based on the above categoires// might be good to change this do at the same time as the above three
-eo@data$color[eo@data$lastyear<extantyear] <- "#f44d41"
-eo@data$color[eo@data$lastyear>=extantyear] <- "#4286f4"
+eo@data$color[eo@data$lastyear>extantyear] <- "#f44d41"
+eo@data$color[eo@data$lastyear<=extantyear] <- "#4286f4"
 eo@data$color[is.na(eo@data$lastyear)] <- "#f44d41"
 # the following lines just add a plot symbol based on the above categoires// might be good to change this do at the same time as the above three
-eo@data$pchsym[eo@data$lastyear<extantyear] <- 19 #circle
-eo@data$pchsym[eo@data$lastyear>=extantyear] <- 17 # triangle
+eo@data$pchsym[eo@data$lastyear>extantyear] <- 19 #circle
+eo@data$pchsym[eo@data$lastyear<=extantyear] <- 17 # triangle
 eo@data$pchsym[is.na(eo@data$lastyear)] <- 19 # circle
 
 # subset to nonsensitive species for dot based maps
 eo.nonsensitive <- eo[eo$SENSITV_SP=="N",]
-writeOGR(eo.nonsensitive, dsn=getwd(), "eo.nonsensitive", driver="ESRI Shapefile", overwrite_layer=TRUE)
-eo.sensitive <- readOGR(dsn=getwd(), "eo.nonsensitive")
+#writeOGR(eo.nonsensitive, dsn=getwd(), "eo.nonsensitive", driver="ESRI Shapefile", overwrite_layer=TRUE)
+#eo.sensitive <- readOGR(dsn=getwd(), "eo.nonsensitive")
 
 #get a list of snames to run the loop
 snames.nonsensitive <- eo.nonsensitive@data[c("SNAME","SCOMNAME")]
@@ -42,7 +42,7 @@ for (i in 1:length(snames.nonsensitive$SNAME)) {
   names1 <- c(as.character(snames.nonsensitive$SCOMNAME[i]),as.character(snames.nonsensitive$SNAME[i]))
   plot(county, main=bquote( .(names1[1]) ~ "(" * italic(.(names1[2])) * ")"  ))
   plot(tmp, add=T, pch =eo.nonsensitive@data$pchsym, cex=1, col=eo.nonsensitive@data$color)
-  legend(x="bottom",inset=-0.025,legend=c(paste("Records pre-",extantyear,sep=""),paste("Records post-",extantyear,sep="")), col=c("#4286f4","#f44d41"), pch=c(19,17), cex=1, bty="n", ncol=2)  #
+  legend(x="bottom",inset=-0.025,legend=c(paste("Records pre-",extantyear,sep=""),paste("Records post-",extantyear,sep="")), col=c("#f44d41","#4286f4"), pch=c(19,17), cex=1, bty="n", ncol=2)  #
   #writeOGR(tmp, dsn=getwd(), snames[i], driver="ESRI Shapefile", overwrite_layer=TRUE)
   dev.off() # turns off the plotter writing to pngs
 }
