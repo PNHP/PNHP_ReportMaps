@@ -42,7 +42,7 @@ for (i in 1:length(snames.nonsensitive$SNAME)) {
   names1 <- c(as.character(snames.nonsensitive$SCOMNAME[i]),as.character(snames.nonsensitive$SNAME[i]))
   plot(county, main=bquote( .(names1[1]) ~ "(" * italic(.(names1[2])) * ")"  ))
   plot(tmp, add=T, pch =eo.nonsensitive@data$pchsym, cex=1, col=eo.nonsensitive@data$color)
-  legend(x="bottom",inset=-0.025,legend=c(paste("Records pre-",extantyear,sep=""),paste("Records post-",extantyear,sep="")), col=c("#f44d41","#4286f4"), pch=c(19,17), cex=1, bty="n", ncol=2)  #
+  legend(x="bottom",inset=-0.025,legend=c(paste("Records pre-",extantyear,sep=""),paste("Records post-",extantyear,sep="")), col=c("#4286f4","#f44d41"), pch=c(19,17), cex=1, bty="n", ncol=2)  #
   #writeOGR(tmp, dsn=getwd(), snames[i], driver="ESRI Shapefile", overwrite_layer=TRUE)
   dev.off() # turns off the plotter writing to pngs
 }
