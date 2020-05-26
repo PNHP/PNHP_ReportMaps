@@ -1,14 +1,19 @@
-# fixed to prev version
 
 #load the packages
+library(tidyverse)
+library(here)
 library(natserv)
-library(rgdal)
+library(arcgisbinding)
 
-setwd("C:/Users/ctracey/Dropbox (PNHP @ WPC)/FactsheetMaps")
 
-# http://services.natureserve.org/docs/schemas/biodiversityDataFlow/1/1/documentation_comprehensiveSpecies_v1.1.xml
-# need to set an environment varible for the NatureServe key
-Sys.setenv(NATURE_SERVE_KEY="72ddf45a-c751-44c7-9bca-8db3b4513347")
+arc.check_product()
+
+
+
+
+# # http://services.natureserve.org/docs/schemas/biodiversityDataFlow/1/1/documentation_comprehensiveSpecies_v1.1.xml
+# # need to set an environment varible for the NatureServe key
+# Sys.setenv(NATURE_SERVE_KEY="72ddf45a-c751-44c7-9bca-8db3b4513347")
 
 # load the state shapefile
 states <- readOGR("C:/Users/ctracey/Dropbox (PNHP @ WPC)/FactsheetMaps","subnational_boundaries")
