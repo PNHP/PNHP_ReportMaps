@@ -5,23 +5,45 @@ library(here)
 library(natserv)
 library(arcgisbinding)
 
-
 arc.check_product()
 
-
-
-
-# # http://services.natureserve.org/docs/schemas/biodiversityDataFlow/1/1/documentation_comprehensiveSpecies_v1.1.xml
-# # need to set an environment varible for the NatureServe key
-# Sys.setenv(NATURE_SERVE_KEY="72ddf45a-c751-44c7-9bca-8db3b4513347")
-
-# load the state shapefile
-states <- readOGR("C:/Users/ctracey/Dropbox (PNHP @ WPC)/FactsheetMaps","subnational_boundaries")
-#states_df <- fortify(states,region = "OBJECTID")
-states_center <- readOGR("C:/Users/ctracey/Dropbox (PNHP @ WPC)/FactsheetMaps","subnational_boundaries_centroid")
+# load spatial information from local geodatabase
+template_RegionalStatus <- arc.open(here::here("PNHP_ReportMaps.gdb","template_RegionalStatusInset")) # load the state boundaries
+template_RegionalStatus <- arc.select(template_RegionalStatus)
+template_RegionalStatus <- arc.data2sf(template_RegionalStatus)
+template_RegionalStatusCentroid <- arc.open(here::here("PNHP_ReportMaps.gdb","template_RegionalStatusInsetCentroid")) # load the state boundaries
+template_RegionalStatusCentroid <- arc.select(template_RegionalStatuCentroids)
+template_RegionalStatusCentroid <- arc.data2sf(template_RegionalStatusCentroid)
 
 # load the species list
-species <- read.csv("tracked_species_universal_id_pa_20170530.csv")
+species <- read.csv(here("tracked_species_universal_id_pa_20170530.csv"), stringsAsFactors=FALSE)
+
+
+
+a <- ns_search_spp(text="Euphorbia purpurea")
+b <- as.data.frame(a[1]$results$nations)
+c <- b$subnations[[1]]
+
+
+# build the new data frame
+
+map1 <- merge(template_RegionalStatus, c, by.x="subnation", by.y="subnationCode", all.x=TRUE)
+ 
+ranks <- data.frame(SRANK=c("SX","SH","S1","S2","S3","S4","S5","SNR","SU"),RankDef=c("Presumed Extinct (SX)","Possibly Extinct (SH)","Critically Imperiled (S1)","Imperiled (S2)","Vulnerable (S3)","Apparently Secure (S4)","Secure (S5)","Not Assessed/Under Review (SNR/SU)","Not Assessed/Under Review (SNR/SU)"), stringsAsFactors=TRUE)
+
+map1a <- merge(map1, ranks, by.x="roundedSRank", by.y="SRANK", all.x=TRUE)
+map1a$roundedSRank <- as.factor(map1a$roundedSRank)
+levels(map1a$roundedSRank) <- ranks$SRANK
+
+# build the plot
+
+ggplot(data=map1) +
+  geom_sf(aes(fill=roundedSRank)) +
+  theme_bw()
+
+
+
+
 # build th UID
 species$UID <- paste("ELEMENT_GLOBAL",species$ELEMENT_GLOBAL_OU_UID,species$ELEMENT.GLOBAL.UNIVERSAL.KEY,sep=".")
 
@@ -68,7 +90,7 @@ for (i in 1:length(snames$UID)) {
   plot(state_status, col=(state_status@data$color))  
   text(states_center, labels=states_center$subnation,col="black", cex=0.5, adj=c(0.5, NA))
   dev.off() # turns off the plotter writing to pngs
-  }
+}
 
 # https://www.arcgis.com/home/item.html?id=46d9f3f43c664256a96a9c8552ff7c5a
 
