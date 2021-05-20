@@ -1,3 +1,17 @@
+#---------------------------------------------------------------------------------------------
+# Name: regional_rank_maps.r
+# Purpose: 
+# Author: Christopher Tracey
+# Created: 2021-04-27
+# Updated: 2021-05-17
+#
+# Updates:
+#   2021-05-17 - code cleanup and documentation
+# 
+#
+# To Do List/Future Ideas:
+# * 
+#---------------------------------------------------------------------------------------------
 
 #load the packages
 library(tidyverse)
@@ -5,7 +19,7 @@ library(here)
 library(natserv)
 library(arcgisbinding)
 
-arc.check_product()
+arc.check_product() # get the arc license
 
 # load spatial information from local geodatabase
 template_RegionalStatus <- arc.open(here::here("PNHP_ReportMaps.gdb","template_RegionalStatusInset")) # load the state boundaries
@@ -19,30 +33,30 @@ species <- read.csv(here("tracked_species_universal_id_pa_20170530.csv"), string
 species$UID <- paste("ELEMENT_GLOBAL",species$ELEMENT_GLOBAL_OU_UID,species$ELEMENT.GLOBAL.UNIVERSAL.KEY,sep=".")
 
 # test of the for loop
-#get a list of snames to run the loop
+#get a list of SNAMEs to run the loop
 snames <-species[c("ELCODE","SNAME","UID")]
-snames <- snames[substr(snames$ELCODE,1,1)=="P",] # only plants
+#snames <- snames[substr(snames$ELCODE,1,1)=="P",] # only plants
 snames <- droplevels(snames)
 snames <- unique(snames)
 snames <- snames[order(snames$SNAME),] 
 
-#i=3
+snames <- sample(snames, size=10)
 
-for (i in 1:length(snames$UID)) {  #length(snames$UID)
-  res <- list()
-  delayedAssign("do.next", {next})
-  tryCatch(res <- ns_id(uid=snames$UID[i]), finally=print(snames$SNAME[i]), error=function(e) force(do.next)) # w <- ns_id(uid=snames$UID[i])
+# loop to get the data and make the maps
+for (i in 1:length(snames$UID)) {  
+  res <- list() # initialize an empty list
+  delayedAssign("do.next", {next}) # some error catching if the results come back empty
+  tryCatch(res <- ns_id(uid=snames$UID[i]), finally=print(snames$SNAME[i]), error=function(e) force(do.next)) 
   
-  res$elementNationals$nation$isoCode
-  
-  #put the rank list into a variable for below
+  # put the rank list into a variable for below
   constatus_US <- as.data.frame(res$elementNationals$elementSubnationals[match("US", res$elementNationals$nation$isoCode)]) 
+  constatus_US <- jsonlite::flatten(constatus_US) # gets rid of the nested data frame
   constatus_CA <- as.data.frame(res$elementNationals$elementSubnationals[match("CA", res$elementNationals$nation$isoCode)])
-  constatus_US <- jsonlite::flatten(constatus_US)
-  constatus_CA <- jsonlite::flatten(constatus_CA)
+  constatus_CA <- jsonlite::flatten(constatus_CA) # gets rid of the nested data frame
   
+  # combine the US and CA data. Is there state level data for MX?
   constatus <- rbind(constatus_US, constatus_CA)
-  rm(constatus_US, constatus_CA)
+  rm(constatus_US, constatus_CA) # clean up
   
   constatus$roundedSRank[which(constatus$roundedSRank=="SNR")] <- "SNR/SU/SNA"
   constatus$roundedSRank[which(constatus$roundedSRank=="SU")] <- "SNR/SU/SNA"
@@ -72,11 +86,3 @@ for (i in 1:length(snames$UID)) {  #length(snames$UID)
          dpi = 200
   )
 }
-
-# https://www.arcgis.com/home/item.html?id=46d9f3f43c664256a96a9c8552ff7c5a
-
-
-
-
-
-
