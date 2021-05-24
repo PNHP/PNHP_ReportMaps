@@ -40,7 +40,7 @@ snames <- droplevels(snames)
 snames <- unique(snames)
 snames <- snames[order(snames$SNAME),] 
 
-snames <- sample(snames, size=10)
+#### TEMP  for demo  snames <- snames[sample(nrow(snames), 10), ] 
 
 # loop to get the data and make the maps
 for (i in 1:length(snames$UID)) {  

@@ -46,9 +46,9 @@ eo_ptrep$extant <- as.factor(eo_ptrep$extant)
 
 # get a list of SNAMEs
 spList <- unique(eo_ptrep[which(eo_ptrep$SENSITV_SP!="Y"),]$SNAME) # non-sensitive species
-spList <- sample(spList, size=10)
+#### TEMP  for demo  spList <- sample(spList, size=10) #### TEMP  for demo
 spListSens <- unique(eo_ptrep[which(eo_ptrep$SENSITV_SP=="Y"),]$SNAME) # sensitive species
-spListSens <- sample(spListSens, size=10)
+#### TEMP  for demo  spListSens <- sample(spListSens, size=10) 
 
 # make the Non-Sensitive series of maps
 for(i in 1:length(spList)){
