@@ -1,3 +1,17 @@
+#---------------------------------------------------------------------------------------------
+# Name: regional_rank_maps.r
+# Purpose: 
+# Author: Christopher Tracey
+# Created: 2021-04-27
+# Updated: 2021-05-17
+#
+# Updates:
+#   2021-05-17 - code cleanup and documentation
+# 
+#
+# To Do List/Future Ideas:
+# * 
+#---------------------------------------------------------------------------------------------
 
 #load the packages
 library(tidyverse)
@@ -5,92 +19,70 @@ library(here)
 library(natserv)
 library(arcgisbinding)
 
-arc.check_product()
+arc.check_product() # get the arc license
 
 # load spatial information from local geodatabase
 template_RegionalStatus <- arc.open(here::here("PNHP_ReportMaps.gdb","template_RegionalStatusInset")) # load the state boundaries
 template_RegionalStatus <- arc.select(template_RegionalStatus)
 template_RegionalStatus <- arc.data2sf(template_RegionalStatus)
-template_RegionalStatusCentroid <- arc.open(here::here("PNHP_ReportMaps.gdb","template_RegionalStatusInsetCentroid")) # load the state boundaries
-template_RegionalStatusCentroid <- arc.select(template_RegionalStatuCentroids)
-template_RegionalStatusCentroid <- arc.data2sf(template_RegionalStatusCentroid)
 
 # load the species list
 species <- read.csv(here("tracked_species_universal_id_pa_20170530.csv"), stringsAsFactors=FALSE)
-
-
-
-a <- ns_search_spp(text="Euphorbia purpurea")
-b <- as.data.frame(a[1]$results$nations)
-c <- b$subnations[[1]]
-
-
-# build the new data frame
-
-map1 <- merge(template_RegionalStatus, c, by.x="subnation", by.y="subnationCode", all.x=TRUE)
- 
-ranks <- data.frame(SRANK=c("SX","SH","S1","S2","S3","S4","S5","SNR","SU"),RankDef=c("Presumed Extinct (SX)","Possibly Extinct (SH)","Critically Imperiled (S1)","Imperiled (S2)","Vulnerable (S3)","Apparently Secure (S4)","Secure (S5)","Not Assessed/Under Review (SNR/SU)","Not Assessed/Under Review (SNR/SU)"), stringsAsFactors=TRUE)
-
-map1a <- merge(map1, ranks, by.x="roundedSRank", by.y="SRANK", all.x=TRUE)
-map1a$roundedSRank <- as.factor(map1a$roundedSRank)
-levels(map1a$roundedSRank) <- ranks$SRANK
-
-# build the plot
-
-ggplot(data=map1) +
-  geom_sf(aes(fill=roundedSRank)) +
-  theme_bw()
-
-
-
 
 # build th UID
 species$UID <- paste("ELEMENT_GLOBAL",species$ELEMENT_GLOBAL_OU_UID,species$ELEMENT.GLOBAL.UNIVERSAL.KEY,sep=".")
 
 # test of the for loop
-#get a list of snames to run the loop
+#get a list of SNAMEs to run the loop
 snames <-species[c("ELCODE","SNAME","UID")]
-snames <- snames[substr(snames$ELCODE,1,1)=="P",]
+#snames <- snames[substr(snames$ELCODE,1,1)=="P",] # only plants
 snames <- droplevels(snames)
 snames <- unique(snames)
 snames <- snames[order(snames$SNAME),] 
 
-for (i in 1:length(snames$UID)) {
-  res <- list()
-  delayedAssign("do.next", {next})
-  tryCatch(res <- ns_data(uid=snames$UID[i]), finally=print(snames$SNAME[i]), error=function(e) force(do.next))
-  #res[[1]]$speciesCode  #show the ELCODE
-  #put the rank list into a varible for below
-  subconstatus_US <- res[[1]]$conservationStatus$natureserve$nationalStatuses$US$subnationalStatuses
-  if (length(subconstatus_US)==0) stop("no distribution info", call=F)
-  states_ranks_US <- data.frame(matrix(unlist(subconstatus_US, use.names=T), nrow=length(subconstatus_US), byrow=T))
-  subconstatus_CA <- res[[1]]$conservationStatus$natureserve$nationalStatuses$CA$subnationalStatuses
-  if (length(subconstatus_CA)==0) {   #stop("no CA distribution info", call=F)
-    states_ranks <- states_ranks_US 
-  } else {
-    states_ranks_CA <- data.frame(matrix(unlist(subconstatus_CA, use.names=T), nrow=length(subconstatus_CA), byrow=T))
-    states_ranks <- rbind(states_ranks_US,states_ranks_CA)  
-  }
-  colnames(states_ranks) <- names(subconstatus_US[[1]]) # assign names to the columns 
-  # assign colors to the ranks
-  states_ranks$color[states_ranks$roundedRank=="SX"]  <- "#003593"
-  states_ranks$color[states_ranks$roundedRank=="SH"]  <- "#6F97F3"
-  states_ranks$color[states_ranks$roundedRank=="S1"]  <- "#D30200"
-  states_ranks$color[states_ranks$roundedRank=="S2"]  <- "#FF914B"
-  states_ranks$color[states_ranks$roundedRank=="S3"]  <- "#FFFF2D"
-  states_ranks$color[states_ranks$roundedRank=="S4"]  <- "#64FE3A"
-  states_ranks$color[states_ranks$roundedRank=="S5"]  <- "#039B2E"
-  states_ranks$color[states_ranks$roundedRank=="SNR"] <- "#9B656C"
-  states_ranks$color[states_ranks$roundedRank=="SU"]  <- "#9B656C"
-  states_ranks$color[states_ranks$roundedRank=="SNA"] <- "#FFC8FF"
-  # join to polygons
-  state_status <- merge(states, states_ranks, by.x="subnation", by.y="subnationCode")
-  # plot
-  png(file=paste("mapsRegion/",snames$SNAME[i],".png",sep=""), width=2100, height=1800,res=300)
-  plot(state_status, col=(state_status@data$color))  
-  text(states_center, labels=states_center$subnation,col="black", cex=0.5, adj=c(0.5, NA))
-  dev.off() # turns off the plotter writing to pngs
+#### TEMP  for demo  snames <- snames[sample(nrow(snames), 10), ] 
+
+# loop to get the data and make the maps
+for (i in 1:length(snames$UID)) {  
+  res <- list() # initialize an empty list
+  delayedAssign("do.next", {next}) # some error catching if the results come back empty
+  tryCatch(res <- ns_id(uid=snames$UID[i]), finally=print(snames$SNAME[i]), error=function(e) force(do.next)) 
+  
+  # put the rank list into a variable for below
+  constatus_US <- as.data.frame(res$elementNationals$elementSubnationals[match("US", res$elementNationals$nation$isoCode)]) 
+  constatus_US <- jsonlite::flatten(constatus_US) # gets rid of the nested data frame
+  constatus_CA <- as.data.frame(res$elementNationals$elementSubnationals[match("CA", res$elementNationals$nation$isoCode)])
+  constatus_CA <- jsonlite::flatten(constatus_CA) # gets rid of the nested data frame
+  
+  # combine the US and CA data. Is there state level data for MX?
+  constatus <- rbind(constatus_US, constatus_CA)
+  rm(constatus_US, constatus_CA) # clean up
+  
+  constatus$roundedSRank[which(constatus$roundedSRank=="SNR")] <- "SNR/SU/SNA"
+  constatus$roundedSRank[which(constatus$roundedSRank=="SU")] <- "SNR/SU/SNA"
+  constatus$roundedSRank[which(constatus$roundedSRank=="SNA")] <- "SNR/SU/SNA"
+  
+  unique(constatus$roundedSRank)
+  constatus$roundedSRank <- ordered(constatus$roundedSRank, levels=c("SX","SH","S1","S2","S3","S4","S5","SNR/SU/SNA"))
+ 
+  tmpmap <- merge(template_RegionalStatus, constatus, by.x="subnation", by.y="subnation.subnationCode", all.x=TRUE)
+  
+   # build the plot
+  a <- ggplot(data=tmpmap) +
+    geom_sf(aes(fill=roundedSRank)) +
+    scale_fill_manual(
+      breaks=c("SX","SH","S1","S2","S3","S4","S5","SNR/SU/SNA"), 
+      values=c("SX"="#666666", "SH"="#98928B", "S1"="#E96B6B", "S2"="#F7AD75", "S3"="#FDE26E", "S4"="#7CD6F5", "S5"="#668BB3", "SNR/SU/SNA"="#E5CFC3"),
+      labels=c("Presumed Extirpated (SX)","Possibly Extirpated (SH)","Critically Imperiled (S1)","Imperiled (S2)","Vulnerable (S3)","Apparently Secure (S4)","Secure (S5)","No Status Rank (SNR/SU/SNA)"), drop=FALSE) + #
+    theme_void() +
+    theme(legend.position="right") +
+    theme(legend.title=element_blank()) +
+    theme(legend.text = element_text(size=8))
+
+  ggsave(filename=paste(here::here("data","regRank"),"/","regRank_",gsub(" ","-",unique(snames$SNAME[i])),"_",gsub("-","",Sys.Date()),".png", sep=""), plot=a,
+         width = 8,
+         height = 6,
+         units = c("in"),
+         dpi = 200
+  )
 }
-
-# https://www.arcgis.com/home/item.html?id=46d9f3f43c664256a96a9c8552ff7c5a
-
