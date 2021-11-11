@@ -43,7 +43,7 @@ snames <- snames[order(snames$SNAME),]
 #### TEMP  for demo  snames <- snames[sample(nrow(snames), 10), ] 
 
 # loop to get the data and make the maps
-for (i in 1:length(snames$UID)) {  
+for (i in 244:length(snames$UID)) {  
   res <- list() # initialize an empty list
   delayedAssign("do.next", {next}) # some error catching if the results come back empty
   tryCatch(res <- ns_id(uid=snames$UID[i]), finally=print(snames$SNAME[i]), error=function(e) force(do.next)) 
