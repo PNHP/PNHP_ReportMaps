@@ -22,6 +22,9 @@ library(ggplot2)
 
 arc.check_product()
 
+#arc.check_portal()  # may need to update bridge to most recent version if it crashes: https://github.com/R-ArcGIS/r-bridge/issues/46
+#bioticsFeatServ_path <- "https://maps.waterlandlife.org/arcgis/rest/services/PNHP/Biotics/FeatureServer"
+
 # load subnation boundary feature class. 
 serverPath <- paste("C:/Users/",Sys.getenv("USERNAME"),"/AppData/Roaming/ESRI/ArcGISPro/Favorites/StateLayers.Default.pgh-gis0.sde/",sep="") #pointing to PNHP GIS infrastructure. You can change this to a local file, feature service, or the like...
 county <- arc.open(paste(serverPath,"StateLayers.DBO.County", sep=""))  
@@ -32,6 +35,9 @@ county <- arc.data2sf(county)
 eo_ptrep <- arc.open("W:/Heritage/Heritage_Data/Biotics_datasets.gdb/eo_ptreps")  # monthly exports provided by PNHP data management
 eo_ptrep <- arc.select(eo_ptrep, where_clause="EO_TRACK='Y' OR EO_TRACK='W'")
 eo_ptrep <- arc.data2sf(eo_ptrep)
+
+
+
 
 # get the current year
 currentyear <- as.numeric(format(Sys.Date(), format="%Y"))
@@ -53,6 +59,7 @@ spListSens <- unique(eo_ptrep[which(eo_ptrep$SENSITV_SP=="Y"),]$SNAME) # sensiti
 # make the Non-Sensitive series of maps
 for(i in 1:length(spList)){
   eo_map <- eo_ptrep[which(eo_ptrep$SNAME==spList[i]),]
+  cat("Making the sensitive species maps for",spList[i],"\n")
   eo_map$SNAME <- gsub("/","-",eo_map$SNAME)
   # map it
   a <- ggplot() +
@@ -75,6 +82,7 @@ for(i in 1:length(spList)){
 # make the Sensitive series of maps
 for(i in 1:length(spListSens)){
   eo_map <- eo_ptrep[which(eo_ptrep$SNAME==spListSens[i]),]
+  cat("Making the sensitive species maps for",spListSens[i],"\n")
   # map an sensitive species maps for internal use
   a <- ggplot() +
     geom_sf(data=county, fill=NA) +
