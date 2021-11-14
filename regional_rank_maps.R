@@ -53,38 +53,39 @@ for (i in 1:length(snames$UID)) {
   constatus_US <- jsonlite::flatten(constatus_US) # gets rid of the nested data frame
   constatus_CA <- as.data.frame(res$elementNationals$elementSubnationals[match("CA", res$elementNationals$nation$isoCode)])
   constatus_CA <- jsonlite::flatten(constatus_CA) # gets rid of the nested data frame
+  # this handles species for which there are no conservatoin statuses...
+  if(dim(constatus_CA)==c(0,0)&dim(constatus_US)==c(0,0)){
+    cat("There is no conservation statuses for this species, skipping...\n")
+  } else {
+    # combine the US and CA data. 
+    constatus <- rbind(constatus_US, constatus_CA)
+    rm(constatus_US, constatus_CA) # clean up
+    # combine the SNR, SU, SNA status
+    constatus$roundedSRank[which(constatus$roundedSRank=="SNR")] <- "SNR/SU/SNA"
+    constatus$roundedSRank[which(constatus$roundedSRank=="SU")] <- "SNR/SU/SNA"
+    constatus$roundedSRank[which(constatus$roundedSRank=="SNA")] <- "SNR/SU/SNA"
+    # make a ordered factor of all the sranks  #unique(constatus$roundedSRank)
+    constatus$roundedSRank <- ordered(constatus$roundedSRank, levels=c("SX","SH","S1","S2","S3","S4","S5","SNR/SU/SNA"))
+    
+    tmpmap <- merge(template_RegionalStatus, constatus, by.x="subnation", by.y="subnation.subnationCode", all.x=TRUE)
+    # build the plot
+    a <- ggplot(data=tmpmap) +
+      geom_sf(aes(fill=roundedSRank)) +
+      scale_fill_manual(
+        breaks=c("SX","SH","S1","S2","S3","S4","S5","SNR/SU/SNA"), 
+        values=c("SX"="#666666", "SH"="#98928B", "S1"="#E96B6B", "S2"="#F7AD75", "S3"="#FDE26E", "S4"="#7CD6F5", "S5"="#668BB3", "SNR/SU/SNA"="#E5CFC3"),
+        labels=c("Presumed Extirpated (SX)","Possibly Extirpated (SH)","Critically Imperiled (S1)","Imperiled (S2)","Vulnerable (S3)","Apparently Secure (S4)","Secure (S5)","No Status Rank (SNR/SU/SNA)"), drop=FALSE, na.value="white") + #
+      theme_void() +
+      theme(legend.position="right") +
+      theme(legend.title=element_blank()) +
+      theme(legend.text = element_text(size=8))
+    # save the map as a png
+    ggsave(filename=paste(here::here("data","regRank"),"/","regRank_",gsub(" ","-",unique(snames$SNAME[i])),"_",gsub("-","",Sys.Date()),".png", sep=""), plot=a,
+           width = 8,
+           height = 6,
+           units = c("in"),
+           dpi = 200
+    )
+  }
   
-  
-  
-  # combine the US and CA data. Is there state level data for MX?
-  constatus <- rbind(constatus_US, constatus_CA)
-  rm(constatus_US, constatus_CA) # clean up
-  
-  constatus$roundedSRank[which(constatus$roundedSRank=="SNR")] <- "SNR/SU/SNA"
-  constatus$roundedSRank[which(constatus$roundedSRank=="SU")] <- "SNR/SU/SNA"
-  constatus$roundedSRank[which(constatus$roundedSRank=="SNA")] <- "SNR/SU/SNA"
-  
-  unique(constatus$roundedSRank)
-  constatus$roundedSRank <- ordered(constatus$roundedSRank, levels=c("SX","SH","S1","S2","S3","S4","S5","SNR/SU/SNA"))
- 
-  tmpmap <- merge(template_RegionalStatus, constatus, by.x="subnation", by.y="subnation.subnationCode", all.x=TRUE)
-  
-   # build the plot
-  a <- ggplot(data=tmpmap) +
-    geom_sf(aes(fill=roundedSRank)) +
-    scale_fill_manual(
-      breaks=c("SX","SH","S1","S2","S3","S4","S5","SNR/SU/SNA"), 
-      values=c("SX"="#666666", "SH"="#98928B", "S1"="#E96B6B", "S2"="#F7AD75", "S3"="#FDE26E", "S4"="#7CD6F5", "S5"="#668BB3", "SNR/SU/SNA"="#E5CFC3"),
-      labels=c("Presumed Extirpated (SX)","Possibly Extirpated (SH)","Critically Imperiled (S1)","Imperiled (S2)","Vulnerable (S3)","Apparently Secure (S4)","Secure (S5)","No Status Rank (SNR/SU/SNA)"), drop=FALSE, na.value="white") + #
-    theme_void() +
-    theme(legend.position="right") +
-    theme(legend.title=element_blank()) +
-    theme(legend.text = element_text(size=8))
-
-  ggsave(filename=paste(here::here("data","regRank"),"/","regRank_",gsub(" ","-",unique(snames$SNAME[i])),"_",gsub("-","",Sys.Date()),".png", sep=""), plot=a,
-         width = 8,
-         height = 6,
-         units = c("in"),
-         dpi = 200
-  )
 }
