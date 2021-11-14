@@ -43,7 +43,7 @@ snames <- snames[order(snames$SNAME),]
 #### TEMP  for demo  snames <- snames[sample(nrow(snames), 10), ] 
 
 # loop to get the data and make the maps
-for (i in 244:length(snames$UID)) {  
+for (i in 1:length(snames$UID)) {  
   res <- list() # initialize an empty list
   delayedAssign("do.next", {next}) # some error catching if the results come back empty
   tryCatch(res <- ns_id(uid=snames$UID[i]), finally=print(snames$SNAME[i]), error=function(e) force(do.next)) 
@@ -53,6 +53,8 @@ for (i in 244:length(snames$UID)) {
   constatus_US <- jsonlite::flatten(constatus_US) # gets rid of the nested data frame
   constatus_CA <- as.data.frame(res$elementNationals$elementSubnationals[match("CA", res$elementNationals$nation$isoCode)])
   constatus_CA <- jsonlite::flatten(constatus_CA) # gets rid of the nested data frame
+  
+  
   
   # combine the US and CA data. Is there state level data for MX?
   constatus <- rbind(constatus_US, constatus_CA)
@@ -73,7 +75,7 @@ for (i in 244:length(snames$UID)) {
     scale_fill_manual(
       breaks=c("SX","SH","S1","S2","S3","S4","S5","SNR/SU/SNA"), 
       values=c("SX"="#666666", "SH"="#98928B", "S1"="#E96B6B", "S2"="#F7AD75", "S3"="#FDE26E", "S4"="#7CD6F5", "S5"="#668BB3", "SNR/SU/SNA"="#E5CFC3"),
-      labels=c("Presumed Extirpated (SX)","Possibly Extirpated (SH)","Critically Imperiled (S1)","Imperiled (S2)","Vulnerable (S3)","Apparently Secure (S4)","Secure (S5)","No Status Rank (SNR/SU/SNA)"), drop=FALSE) + #
+      labels=c("Presumed Extirpated (SX)","Possibly Extirpated (SH)","Critically Imperiled (S1)","Imperiled (S2)","Vulnerable (S3)","Apparently Secure (S4)","Secure (S5)","No Status Rank (SNR/SU/SNA)"), drop=FALSE, na.value="white") + #
     theme_void() +
     theme(legend.position="right") +
     theme(legend.title=element_blank()) +
