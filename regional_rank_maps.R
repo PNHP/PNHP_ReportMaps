@@ -60,7 +60,17 @@ for (i in 1:length(snames$UID)) {
     # combine the US and CA data. 
     constatus <- rbind(constatus_US, constatus_CA)
     rm(constatus_US, constatus_CA) # clean up
+    # select the lower of a seasonal rank
+    
+    library(stringr)
+    constatus$smallest_number <- sapply(
+      str_extract_all(constatus$roundedSRank, "[0-9]+"),
+      function(x) min(as.integer(x))
+    )
+    constatus$roundedSRank <- ifelse(is.finite(constatus$smallest_number), paste("S",constatus$smallest_number, sep=""), constatus$roundedSRank) 
+    
     # combine the SNR, SU, SNA status
+    constatus$roundedSRank[which(constatus$roundedSRank=="SNRN")] <- "SNR/SU/SNA"
     constatus$roundedSRank[which(constatus$roundedSRank=="SNR")] <- "SNR/SU/SNA"
     constatus$roundedSRank[which(constatus$roundedSRank=="SU")] <- "SNR/SU/SNA"
     constatus$roundedSRank[which(constatus$roundedSRank=="SNA")] <- "SNR/SU/SNA"
