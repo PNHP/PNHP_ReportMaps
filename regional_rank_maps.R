@@ -21,6 +21,10 @@ library(arcgisbinding)
 
 arc.check_product() # get the arc license
 
+# create a directory for this update unless it already exists
+ifelse(!dir.exists(here::here("_data")), dir.create(here::here("_data")), FALSE)
+ifelse(!dir.exists(here::here("_data","regRank")), dir.create(here::here("_data","regRank")), FALSE)
+
 # load spatial information from local geodatabase
 template_RegionalStatus <- arc.open(here::here("PNHP_ReportMaps.gdb","template_RegionalStatusInset")) # load the state boundaries
 template_RegionalStatus <- arc.select(template_RegionalStatus)
@@ -90,7 +94,7 @@ for (i in 1:length(snames$UID)) {
       theme(legend.title=element_blank()) +
       theme(legend.text = element_text(size=8))
     # save the map as a png
-    ggsave(filename=paste(here::here("data","regRank"),"/","regRank_",gsub(" ","-",unique(snames$SNAME[i])),"_",gsub("-","",Sys.Date()),".png", sep=""), plot=a,
+    ggsave(filename=paste(here::here("_data","regRank"),"/","regRank_",gsub(" ","-",unique(snames$SNAME[i])),"_",gsub("-","",Sys.Date()),".png", sep=""), plot=a,
            width = 8,
            height = 6,
            units = c("in"),

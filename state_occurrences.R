@@ -25,8 +25,13 @@ arc.check_product()
 #arc.check_portal()  # may need to update bridge to most recent version if it crashes: https://github.com/R-ArcGIS/r-bridge/issues/46
 #bioticsFeatServ_path <- "https://maps.waterlandlife.org/arcgis/rest/services/PNHP/Biotics/FeatureServer"
 
+
+# create a directory for this update unless it already exists
+ifelse(!dir.exists(here::here("_data")), dir.create(here::here("_data")), FALSE)
+ifelse(!dir.exists(here::here("_data","stateOcc")), dir.create(here::here("_data","stateOcc")), FALSE)
+
 # load subnation boundary feature class. 
-serverPath <- paste("C:/Users/",Sys.getenv("USERNAME"),"/AppData/Roaming/ESRI/ArcGISPro/Favorites/StateLayers.Default.pgh-gis0.sde/",sep="") #pointing to PNHP GIS infrastructure. You can change this to a local file, feature service, or the like...
+serverPath <- paste("C:/Users/",Sys.getenv("USERNAME"),"/AppData/Roaming/ESRI/ArcGISPro/Favorites/StateLayers.sde/",sep="") #pointing to PNHP GIS infrastructure. You can change this to a local file, feature service, or the like...
 county <- arc.open(paste(serverPath,"StateLayers.DBO.County", sep=""))  
 county <- arc.select(county, fields=c("COUNTY_NAM"))
 county <- arc.data2sf(county)
@@ -35,9 +40,6 @@ county <- arc.data2sf(county)
 eo_ptrep <- arc.open("W:/Heritage/Heritage_Data/Biotics_datasets.gdb/eo_ptreps")  # monthly exports provided by PNHP data management
 eo_ptrep <- arc.select(eo_ptrep, where_clause="EO_TRACK='Y' OR EO_TRACK='W'")
 eo_ptrep <- arc.data2sf(eo_ptrep)
-
-
-
 
 # get the current year
 currentyear <- as.numeric(format(Sys.Date(), format="%Y"))
@@ -71,7 +73,7 @@ for(i in 1:length(spList)){
     theme_void() +
     theme(legend.position="bottom") +
     theme(legend.title=element_blank())
-  ggsave(filename=paste(here::here("data","stateOcc"),"/","eomap_",gsub(" ","-",unique(eo_map$SNAME)),"_",gsub("-","",Sys.Date()),".png", sep=""), plot=a,
+  ggsave(filename=paste(here::here("_data","stateOcc"),"/","eomap_",gsub(" ","-",unique(eo_map$SNAME)),"_",gsub("-","",Sys.Date()),".png", sep=""), plot=a,
     width = 6,
     height = 4,
     units = c("in"),
@@ -93,7 +95,7 @@ for(i in 1:length(spListSens)){
     theme_void() +
     theme(legend.position="bottom") +
     theme(legend.title=element_blank())
-  ggsave(filename=paste(here::here("data","stateOcc"),"/","eomap_SENSITIVE-internal_",gsub(" ","-",unique(eo_map$SNAME)),"_",gsub("-","",Sys.Date()),".png", sep=""), plot=a,
+  ggsave(filename=paste(here::here("_data","stateOcc"),"/","eomap_SENSITIVE-internal_",gsub(" ","-",unique(eo_map$SNAME)),"_",gsub("-","",Sys.Date()),".png", sep=""), plot=a,
          width = 6,
          height = 4,
          units = c("in"),
@@ -121,7 +123,7 @@ for(i in 1:length(spListSens)){
     theme_void() +
     theme(legend.position="bottom") +
     theme(legend.title=element_blank())
-  ggsave(filename=paste(here::here("data","stateOcc"),"/","eomap_SENSITIVE-external_",gsub(" ","-",unique(eo_mapSens$SNAME)),"_",gsub("-","",Sys.Date()),".png", sep=""), plot=a,
+  ggsave(filename=paste(here::here("_data","stateOcc"),"/","eomap_SENSITIVE-external_",gsub(" ","-",unique(eo_mapSens$SNAME)),"_",gsub("-","",Sys.Date()),".png", sep=""), plot=a,
          width = 6,
          height = 4,
          units = c("in"),
